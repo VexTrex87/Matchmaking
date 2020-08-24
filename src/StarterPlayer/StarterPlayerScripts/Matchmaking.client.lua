@@ -11,6 +11,7 @@ local FADE_2 = Color3.fromRGB(0, 0, 0)
 local Core = require(game.ReplicatedStorage.Core)
 local p = game.Players.LocalPlayer
 local Remotes = game.ReplicatedStorage.Remotes
+
 local UI = p.PlayerGui:WaitForChild("Matchmaking")
 local Frame = UI.Frame
 local Left = Frame.Left
@@ -109,23 +110,23 @@ function ButtonClicked(Button)
                 Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
             end
         end
-    elseif Button.Parent == Create.Dificulty then
-        Color({Create.Dificulty.Easy.Text, Create.Dificulty.Medium.Text, Create.Dificulty.Hard.Text, Create.Dificulty.Endless.Text}, FADE_1)
-        Color({Button.Text}, SHOW_1)
-        Create.SelectedDificulty.Value = Button.Name     
     elseif Button.Parent == Create then
         if Button.Name == "Apply" then
             if Create.SelectedPrivacy.Value ~= "" and Create.SelectedDificulty.Value ~= "" and Create.SelectedMap.Value ~= "" then
                 Left.ServerID.Text = Remotes.GenerateCode:InvokeServer({
                     ["Privacy"] = Create.SelectedPrivacy.Value;
                     ["Map"] = Create.SelectedMap.Value;
-                    ["Value"] = Create.SelectedDificulty.Value
+                    ["Dificulty"] = Create.SelectedDificulty.Value
                 })
                 Status = "Success"
             else
                 Status = "Error"
             end
-        end
+        end   
+    elseif Button.Parent == Create.Dificulty then
+        Color({Create.Dificulty.Easy.Text, Create.Dificulty.Medium.Text, Create.Dificulty.Hard.Text, Create.Dificulty.Endless.Text}, FADE_1)
+        Color({Button.Text}, SHOW_1)
+        Create.SelectedDificulty.Value = Button.Name     
     elseif Button.Parent == Create.Maps then
         if Remotes.CheckLevel:InvokeServer(Button.RequiredLevel.Value) then
             Color(Core.Get(Create.Maps, "ImageButton"), FADE_2, true)
