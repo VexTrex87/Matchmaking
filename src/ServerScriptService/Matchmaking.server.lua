@@ -3,7 +3,7 @@
 local MAX_CHARS = 5
 local LETTERS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
 local NUMS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-local DATA_STORE_SCOPE = "Store3"
+local DATA_STORE_SCOPE = "Store4"
 local DATA_STORE_KEY = "Servers"
 local PLACE_IDS = {
 	["Baseplate"] = 5610052484,
@@ -66,6 +66,10 @@ Remotes.JoinServer.OnServerInvoke = function(p, Code)
     end
 end
 
+Remotes.GetServers.OnServerInvoke = function(p)
+    return DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
+end
+
 Remotes.CheckLevel.OnServerInvoke = function(p, MapLvl)
     if p.leaderstats.Level.Value >= MapLvl then
         return true
@@ -89,13 +93,18 @@ Remotes.GenerateCode.OnServerInvoke = function(p, Info)
     until not Found
 
     DataStore.UpdateData(DATA_STORE_SCOPE, DATA_STORE_KEY, {
+
         Privacy = Info.Privacy;
         Map = Info.Map;
         Dificulty = Info.Dificulty;
-        Owner = p.UserId;
+
+        Owner = p.Name;
+        LevelOfOwner = p.leaderstats.Level.Value;
+        
         ServerCode = TeleportService:ReserveServer(PLACE_IDS[Info.Map]);
         Players = {};
         MaxPlayers = 10,
+
     }, Code)
 
     return Code

@@ -5,6 +5,7 @@ wait(1)
 local SHOW_1 = Color3.fromRGB(255, 255, 255)
 local FADE_1 = Color3.fromRGB(150, 150, 150)
 local FADE_2 = Color3.fromRGB(0, 0, 0)
+local SERVER_LIST_UPDATE_DELAY = 5
 
 -- // Variables \\ --
 
@@ -76,7 +77,8 @@ function Update()
 end
 
 function ButtonClicked(Button)
-    local Status
+    UI.Error:Play()
+
     if Button.Parent == UI then
         if Button.Name == "Create" then
             if Create.Visible then
@@ -127,9 +129,9 @@ function ButtonClicked(Button)
                     ["Map"] = Create.SelectedMap.Value;
                     ["Dificulty"] = Create.SelectedDificulty.Value
                 })
-                Status = "Success"
+                UI.Success:Play()
             else
-                Status = "Error"
+                UI.Error:Play()
             end
         end   
     elseif Button.Parent == Create.Dificulty then
@@ -150,23 +152,49 @@ function ButtonClicked(Button)
         end
     end
 
-    if Status == "Error" then
-        UI.Error:Play()
-    elseif Status == "Success" then
-        UI.Success:Play()
-    else
-        UI.Click:Play()
-    end
-
 end
 
 -- // Main \\ --
 
 Update()
+
 for _,Button in pairs(UI:GetDescendants()) do
     if Button:IsA("TextButton") or Button:IsA("ImageButton") then
         Button.MouseButton1Click:Connect(function()
             ButtonClicked(Button)
         end)
+    end
+end
+
+while wait(1) do
+    while Join.Visible do
+        local Servers = Remotes.GetServers:InvokeServer()
+        if Servers then
+            
+            -- Deletes servers that are not found
+            for _,Frame in pairs(Core.Get(Join.Games, "ImageLabel")) do
+                if not table.find(Servers, Frame.Name) or #Info.Players >= MaxPlayers then
+                    Frame:Destroy()
+                end
+            end
+
+            -- Adds servers
+            for Code, Info in pairs(Servers) do
+                if not Join.Games:FindFirstChild(Code) then
+                    local Template = Join.Games.ListLayout.Template:Clone()
+                    Template.Creator.Text = Info.Owner
+                    Template.Dificulty.Text = Info.Dificulty
+                    Template.Level.Text = Info.LevelOfOwner
+                    Template.Parent = Join.Games
+
+                    Template.Join.MouseButton1Click:Connect(function()
+                        Remotes.JoinServer:InvokeServer(Code)
+                    end)
+
+                end
+            end
+
+        end
+        wait(SERVER_LIST_UPDATE_DELAY)
     end
 end
