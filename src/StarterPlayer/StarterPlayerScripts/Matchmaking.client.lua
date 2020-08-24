@@ -39,10 +39,9 @@ function VisibleAll(Table, IsVisible)
 end
 
 function Update()
-    Create.SelectedMap.Value, Create.SelectedDificulty.Value, Create.SelectedPrivacy.Value = "", "", ""
+    Create.SelectedMap.Value, Create.SelectedDificulty.Value, Create.SelectedPrivacy.Value = "", "", "Public"
     VisibleAll({Create, Join, Left, Frame.Title})
-    Color({
-        Left.CreatePublic.Text;
+    Color({     
         Left.CreatePrivate.Text;
         Left.JoinRandom.Text;
         Create.Dificulty.Easy.Text;
@@ -52,12 +51,15 @@ function Update()
     }, FADE_1)
     
     Color(Core.Get(Create.Maps, "ImageButton"), FADE_2, true)
+    
     Color({
         Create.Maps.Baseplate.Title;
         Create.Maps.Grasslands.Title;
         Create.Maps["The Desert"].Title;
     }, FADE_1)
     
+    Color({Left.CreatePublic.Text;}, SHOW_1)
+
     for _,Map in pairs(Core.Get(Create.Maps, "ImageButton")) do
         local MeetsLevel = Remotes.CheckLevel:InvokeServer(Map.RequiredLevel.Value)
         if not MeetsLevel and not Map:FindFirstChild("Locked") then

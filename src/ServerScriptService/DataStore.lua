@@ -45,4 +45,34 @@ function DataStore.SaveData(Store, Key, Data)
 	
 end
 
+function DataStore.UpdateData(Store, Key, Data, Index)
+
+    if not table.find(Stores, Store) then
+        Stores[Store] = DataStore.GetStore(Store)
+    end   
+
+    local Success, ErrorMessage = pcall(function()
+        Stores[Store]:UpdateAsync(Key, function(Table)
+            if not Table then
+                Table = {}
+            end
+    
+            if Index then
+                Table[Index] = Data
+            else
+                table.insert(Table, Data)
+            end
+            return Table
+        end)
+	end)
+	
+	if Success then
+        print(Store .. "-" .. Key .. " was updated.")
+    else
+        warn(Store .. "-" .. Key .. " was NOT updated.")
+		warn(ErrorMessage)
+	end
+	
+end
+
 return DataStore
