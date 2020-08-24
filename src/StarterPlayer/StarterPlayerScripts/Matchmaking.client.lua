@@ -8,9 +8,12 @@ local FADE_2 = Color3.fromRGB(0, 0, 0)
 
 -- // Variables \\ --
 
-local Core = require(game.ReplicatedStorage.Core)
+local TeleportService = game:GetService("TeleportService")
+local Core = require(game.ReplicatedStorage.Modules.Core)
+local UiModule = require(game.ReplicatedStorage.Modules.UI)
 local p = game.Players.LocalPlayer
 local Remotes = game.ReplicatedStorage.Remotes
+local UIs = game.ReplicatedStorage.UI
 
 local UI = p.PlayerGui:WaitForChild("Matchmaking")
 local Frame = UI.Frame
@@ -106,9 +109,13 @@ function ButtonClicked(Button)
             Color({Left.CreatePrivate.Text}, FADE_1)
             Create.SelectedPrivacy.Value = "Public"
         elseif Button.Name == "JoinRandom" then
-            print("Joining a random match...")
+            UiModule.LoadingScreen.FadeIn(p, {["Text"] = "Join Random Game..."})
+            TeleportService:SetTeleportGui(UIs.JoiningRandom)
+            Remotes.JoinRandom:FireServer()
         elseif Button.Name == "JoinServer" then
             if Left.ServerID.Text ~= "" then
+                UiModule.LoadingScreen.FadeIn(p, {["Text"] = "Join Game..."})
+                TeleportService:SetTeleportGui(UIs.JoiningGame)
                 Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
             end
         end

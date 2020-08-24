@@ -5,7 +5,7 @@ function DataStore.GetStore(Store)
     return game:GetService("DataStoreService"):GetDataStore(Store)
 end
 
-function DataStore.LoadData(Store, Key)
+function DataStore.GetData(Store, Key)
     
     if not table.find(Stores, Store) then
         Stores[Store] = DataStore.GetStore(Store)
