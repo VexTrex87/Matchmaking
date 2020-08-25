@@ -1,6 +1,6 @@
 -- // Settings \\ --
 
-local DATA_STORE_SCOPE = "Store16"
+local DATA_STORE_SCOPE = "Store17"
 local DATA_STORE_KEY = "Servers"
 local SERVER_UPDATE_DELAY = 60
 local SERVER_LOCK_DELAY = 30
@@ -61,20 +61,14 @@ Remotes.JoinRandom.OnServerInvoke = function(p)
 end
 
 Remotes.JoinServer.OnServerInvoke = function(p, Code)
-    print(1)
     if Code and Code ~= "" then
-        print(2)
         local Info = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
-        print(Code)
         if Info and Info[Code] then
-            print(3)
             TeleportToServer(PLACE_IDS[Info[Code].Map], Info[Code].ServerCode, {p})
         else
-            print(4)
             return true
         end
     else
-        print(5)
         return true
     end
 end
@@ -98,7 +92,9 @@ Remotes.GenerateCode.OnServerInvoke = function(p, Info)
         end
         wait()
     until not Found
-
+	
+	local ServerCode, ServerID = TeleportService:ReserveServer(PLACE_IDS[Info.Map])
+	
     DataStore.UpdateData(DATA_STORE_SCOPE, DATA_STORE_KEY, {
         Privacy = Info.Privacy;
         Map = Info.Map;
@@ -107,7 +103,8 @@ Remotes.GenerateCode.OnServerInvoke = function(p, Info)
         Owner = p.Name;
         LevelOfOwner = p.leaderstats.Level.Value;
         
-        ServerCode = TeleportService:ReserveServer(PLACE_IDS[Info.Map]);
+		ServerCode = ServerCode;
+		ServerID = ServerID;
         TimeCreated = os.time();
         Players = {};
         MaxPlayers = 10,
