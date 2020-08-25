@@ -7,6 +7,10 @@ local FADE_1 = Color3.fromRGB(150, 150, 150)
 local FADE_2 = Color3.fromRGB(0, 0, 0)
 local SERVER_LIST_UPDATE_DELAY = 5
 
+local TWEEN_DURATION = 0.5
+local HOVER_DURATION = 0.1
+local HOVER_MULTIPLIER = 1.05
+
 -- // Variables \\ --
 
 local TeleportService = game:GetService("TeleportService")
@@ -22,6 +26,7 @@ local Frame = UI.Frame
 local Left = Frame.Left
 local Create = Frame.Create
 local Join = Frame.Join
+local HoveredItems = {}
 
 -- // Functions \\ --
 
@@ -80,11 +85,13 @@ function ButtonClicked(Button)
     UI.Click:Play()
 
     if Button == UI.Servers then
-        if Frame.Visible then
-            Frame.Visible = false
+        if Frame.Shown.Value then
+            Frame.Shown.Value = false
+            Frame:TweenPosition(UDim2.new(0.5, 0, 1.5, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, TWEEN_DURATION, true)
         else
-            Frame.Visible = true
+            Frame.Shown.Value = true
             Update()
+            Frame:TweenPosition(UDim2.new(0.5, 0, 0.5, 0), Enum.EasingDirection.In, Enum.EasingStyle.Linear, TWEEN_DURATION, true)
         end
     elseif Button.Parent == Left then
         if Button.Name == "CreatePublic" then
@@ -105,13 +112,14 @@ function ButtonClicked(Button)
             UiModule.LoadingScreen.FadeIn(p, "Joining Random Game...")
             TeleportService:SetTeleportGui(UIs.JoiningRandom)
             if Remotes.JoinRandom:InvokeServer() then
+                print("Failed")
                 wait(1)
                 UiModule.LoadingScreen.UpdateProperties(p, {["Text"] = "No Servers Found"})
                 wait(1)
                 UiModule.LoadingScreen.FadeOut(p)
             end
         elseif Button.Name == "JoinServer" and Left.ServerID.Text ~= "" then
-            UiModule.LoadingScreen.FadeIn(p, "Join Game...")
+            UiModule.LoadingScreen.FadeIn(p, "Joining Game...")
             TeleportService:SetTeleportGui(UIs.JoiningGame)
             if Remotes.JoinServer:InvokeServer(Left.ServerID.Text) then
                 wait(1)
@@ -135,7 +143,7 @@ function ButtonClicked(Button)
         Color({Create.Dificulty.Easy.Text, Create.Dificulty.Medium.Text, Create.Dificulty.Hard.Text, Create.Dificulty.Endless.Text}, FADE_1)
         Color({Button.Text}, SHOW_1)
         Create.SelectedDificulty.Value = Button.Name     
-    elseif Button.Parent == Create.Maps and Remotes.GetLevel:InvokeServer() >= Button.RequiredLevel.Value then
+    elseif Button.Parent == Create.Maps and Remotes.GetLevel:InvokeServer() >= Button.RequiredLevel.Value then  
         Create.SelectedMap.Value = Button.Name
         Color(Core.Get(Create.Maps, "ImageButton"), FADE_2, true) -- Fade background
         Color({ -- Fade text
@@ -152,13 +160,32 @@ end
 -- // Main \\ --
 
 Update()
-Frame.Visible = false
+Frame.Visible = true
+Frame.Position = UDim2.new(0.5, 0, 1.5, 0)
 
 for _,Button in pairs(UI:GetDescendants()) do
     if Button:IsA("TextButton") or Button:IsA("ImageButton") then
+
+        -- Clicked
         Button.MouseButton1Click:Connect(function()
             ButtonClicked(Button)
         end)
+
+        -- Hovered
+        if Button.Parent ~= Create.Maps then
+            HoveredItems[Button:GetFullName()] = Button.Size
+
+            Button.MouseEnter:Connect(function()
+                local Size = HoveredItems[Button:GetFullName()]
+                local Goal = UDim2.new(Size.X.Scale * HOVER_MULTIPLIER, Size.X.Offset * HOVER_MULTIPLIER, Size.Y.Scale * HOVER_MULTIPLIER, Size.Y.Offset * HOVER_MULTIPLIER)
+                Button:TweenSize(Goal, Enum.EasingDirection.In, Enum.EasingStyle.Linear, HOVER_DURATION, true)
+            end)
+
+            Button.MouseLeave:Connect(function()
+                Button:TweenSize(HoveredItems[Button:GetFullName()], Enum.EasingDirection.In ,Enum.EasingStyle.Linear, HOVER_DURATION, true)
+            end)
+        end
+
     end
 end
 

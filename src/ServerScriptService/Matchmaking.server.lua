@@ -53,11 +53,11 @@ Remotes.JoinRandom.OnServerInvoke = function(p)
         for Code, Info in pairs(Servers) do
             if #Info.Players < Info.MaxPlayers then
                 TeleportToServer(PLACE_IDS[Info.Map], Info.ServerCode, {p})
+                return
             end
         end
-    else
-        return true
     end
+    return true
 end
 
 Remotes.JoinServer.OnServerInvoke = function(p, Code)
@@ -65,12 +65,10 @@ Remotes.JoinServer.OnServerInvoke = function(p, Code)
         local Info = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
         if Info and Info[Code] then
             TeleportToServer(PLACE_IDS[Info[Code].Map], Info[Code].ServerCode, {p})
-        else
-            return true
+            return
         end
-    else
-        return true
     end
+    return true
 end
 
 Remotes.GetServers.OnServerInvoke = function(p)
