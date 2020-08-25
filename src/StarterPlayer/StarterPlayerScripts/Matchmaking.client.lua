@@ -77,7 +77,7 @@ function Update()
 end
 
 function ButtonClicked(Button)
-    UI.Error:Play()
+    UI.Click:Play()
 
     if Button.Parent == UI then
         if Button.Name == "Create" then
@@ -111,14 +111,33 @@ function ButtonClicked(Button)
             Color({Left.CreatePrivate.Text}, FADE_1)
             Create.SelectedPrivacy.Value = "Public"
         elseif Button.Name == "JoinRandom" then
-            UiModule.LoadingScreen.FadeIn(p, {["Text"] = "Join Random Game..."})
+            UiModule.LoadingScreen.FadeIn(p, "Join Random Game...")
             TeleportService:SetTeleportGui(UIs.JoiningRandom)
-            Remotes.JoinRandom:FireServer()
+            local Failed = Remotes.JoinRandom:InvokeServer()
+            if Failed then
+                wait(1)
+                UiModule.LoadingScreen.UpdateProperties(p, {
+                    ["Text"] = "No Servers Found"
+                })
+                wait(1)
+                UiModule.LoadingScreen.FadeOut(p)
+            end
         elseif Button.Name == "JoinServer" then
             if Left.ServerID.Text ~= "" then
-                UiModule.LoadingScreen.FadeIn(p, {["Text"] = "Join Game..."})
+                UiModule.LoadingScreen.FadeIn(
+                    p,
+                    "Join Game..."
+                )
                 TeleportService:SetTeleportGui(UIs.JoiningGame)
-                Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
+                local Failed = Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
+                if Failed then
+                    wait(1)
+                    UiModule.LoadingScreen.UpdateProperties(p, {
+                        ["Text"] = "Server Not Found"
+                    })
+                    wait(1)
+                    UiModule.LoadingScreen.FadeOut(p)
+                end
             end
         end
     elseif Button.Parent == Create then
@@ -184,11 +203,24 @@ while wait(1) do
                     local Template = Join.Games.ListLayout.Template:Clone()
                     Template.Creator.Text = Info.Owner
                     Template.Dificulty.Text = Info.Dificulty
-                    Template.Level.Text = Info.LevelOfOwner
+                    Template.Level.Text = "Level: " .. Info.LevelOfOwner
                     Template.Parent = Join.Games
 
                     Template.Join.MouseButton1Click:Connect(function()
-                        Remotes.JoinServer:InvokeServer(Code)
+                        UiModule.LoadingScreen.FadeIn(
+                            p,
+                            "Join Game..."
+                        )
+                        TeleportService:SetTeleportGui(UIs.JoiningGame)
+                        local Failed = Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
+                        if Failed then
+                            wait(1)
+                            UiModule.LoadingScreen.UpdateProperties(p, {
+                                ["Text"] = "Server Not Found"
+                            })
+                            wait(1)
+                            UiModule.LoadingScreen.FadeOut(p)
+                        end
                     end)
 
                 end

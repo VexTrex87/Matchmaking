@@ -3,8 +3,10 @@
 local MAX_CHARS = 5
 local LETTERS = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"}
 local NUMS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
-local DATA_STORE_SCOPE = "Store4"
+local DATA_STORE_SCOPE = "Store6"
 local DATA_STORE_KEY = "Servers"
+local SERVER_UPDATE_DELAY = 60
+local SERVER_LOCK_DELAY = 30
 local PLACE_IDS = {
 	["Baseplate"] = 5610052484,
 	["The Desert"] = 5610052631,
@@ -44,25 +46,29 @@ end
 
 -- // Events \\ --
 
-Remotes.JoinRandom.OnServerEvent:Connect(function(p)
+Remotes.JoinRandom.OnServerInvoke = function(p)
     local Servers = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
-    if Servers then
+    if Servers and #Servers > 0 then
         for Code, Info in pairs(Servers) do
             if #Info.Players < Info.MaxPlayers then
                 TeleportToServer(PLACE_IDS[Info.Map], Info.ServerCode, {p})
             end
         end
     else
-        print("No Servers Found")
+        return true
     end
-end)
+end
 
 Remotes.JoinServer.OnServerInvoke = function(p, Code)
     if Code and Code ~= "" then
         local Info = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
-        if Info then
+        if Info and Info[Code] then
             TeleportToServer(PLACE_IDS[Info[Code].Map], Info[Code].ServerCode, {p})
+        else
+            return true
         end
+    else
+        return true
     end
 end
 
@@ -102,10 +108,21 @@ Remotes.GenerateCode.OnServerInvoke = function(p, Info)
         LevelOfOwner = p.leaderstats.Level.Value;
         
         ServerCode = TeleportService:ReserveServer(PLACE_IDS[Info.Map]);
+        TimeCreated = os.time();
         Players = {};
         MaxPlayers = 10,
 
     }, Code)
 
     return Code
+end
+
+while wait(SERVER_UPDATE_DELAY) do
+	local Servers = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
+	local CurrentTime = os.time()
+	for Code, Info in pairs(Servers) do
+		if CurrentTime - Info.TimeCreated >= SERVER_LOCK_DELAY then
+            DataStore.RemoveUpdateData(DATA_STORE_SCOPE, DATA_STORE_KEY, Code)
+        end
+	end
 end

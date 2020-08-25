@@ -7,24 +7,35 @@ UI.LoadingScreen.TweenInfo = TweenInfo.new(
     Enum.EasingDirection.In
 )
 
-function UI.LoadingScreen.FadeIn(p, Properties)
+function UI.LoadingScreen.FadeIn(p, Text, Properties)
 
+    p.PlayerGui.LoadingScreen.Background.Text = ""
     if Properties then
         for Name, Value in pairs(Properties) do
             p.PlayerGui.LoadingScreen.Background[Name] = Value
         end
     end
 
-    TweenService:Create(p.PlayerGui.LoadingScreen.Background, UI.LoadingScreen.TweenInfo, {
+    local Tween = TweenService:Create(p.PlayerGui.LoadingScreen.Background, UI.LoadingScreen.TweenInfo, {
         BackgroundTransparency = 0
-    }):Play()
+    })
 
+    Tween:Play()
+    Tween.Completed:Wait()
+    p.PlayerGui.LoadingScreen.Background.Text = Text
 end
 
 function UI.LoadingScreen.FadeOut(p)
+    p.PlayerGui.LoadingScreen.Background.Text = ""
     TweenService:Create(p.PlayerGui.LoadingScreen.Background, UI.LoadingScreen.TweenInfo, {
         BackgroundTransparency = 1
     }):Play()
+end
+
+function UI.LoadingScreen.UpdateProperties(p, Properties)
+    for Name, Value in pairs(Properties) do
+        p.PlayerGui.LoadingScreen.Background[Name] = Value
+    end
 end
 
 return UI

@@ -75,4 +75,33 @@ function DataStore.UpdateData(Store, Key, Data, Index)
 	
 end
 
+function DataStore.RemoveUpdateData(Store, Key, Index)
+
+    if not table.find(Stores, Store) then
+        Stores[Store] = DataStore.GetStore(Store)
+    end   
+
+    local Success, ErrorMessage = pcall(function()
+        Stores[Store]:UpdateAsync(Key, function(Table)
+            if not Table then
+                Table = {}
+            end
+    
+            if Table[Index] then
+                Table[Index] = nil    
+            end
+
+            return Table
+        end)
+	end)
+	
+	if Success then
+        print(Store .. "-" .. Key .. " was updated.")
+    else
+        warn(Store .. "-" .. Key .. " was NOT updated.")
+		warn(ErrorMessage)
+	end
+	
+end
+
 return DataStore
