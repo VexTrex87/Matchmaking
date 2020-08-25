@@ -133,7 +133,8 @@ function ButtonClicked(Button)
             Left.ServerID.Text = Remotes.GenerateCode:InvokeServer({
                 ["Privacy"] = Create.SelectedPrivacy.Value;
                 ["Map"] = Create.SelectedMap.Value;
-                ["Dificulty"] = Create.SelectedDificulty.Value
+                ["Dificulty"] = Create.SelectedDificulty.Value;
+                ["RequiredLevel"] = Create.Maps[Create.SelectedMap.Value].RequiredLevel.Value
             })
             UI.Success:Play()
         else
@@ -202,12 +203,13 @@ while wait(1) do
             end
 
             -- Adds servers
+            local Level = Remotes.GetLevel:InvokeServer()
             for Code, Info in pairs(Servers) do
-                if not Join.Games:FindFirstChild(Code) and Info.Privacy == "Public" then
+                if not Join.Games:FindFirstChild(Code) and Info.Privacy == "Public" and Level >= Info.RequiredLevel then
                     local Template = Join.Games.ListLayout.Template:Clone()
                     Template.Creator.Text = Info.Owner
                     Template.Dificulty.Text = Info.Dificulty
-                    Template.Level.Text = "Level: " .. Info.LevelOfOwner
+                    Template.Level.Text = "Required Level: " .. Info.RequiredLevel
                     Template.Parent = Join.Games
 
                     Template.Join.MouseButton1Click:Connect(function()

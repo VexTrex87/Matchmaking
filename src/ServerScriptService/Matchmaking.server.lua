@@ -1,6 +1,6 @@
 -- // Settings \\ --
 
-local DATA_STORE_SCOPE = "Store17"
+local DATA_STORE_SCOPE = "Servers"
 local DATA_STORE_KEY = "Servers"
 local SERVER_UPDATE_DELAY = 60
 local SERVER_LOCK_DELAY = 30
@@ -51,7 +51,7 @@ Remotes.JoinRandom.OnServerInvoke = function(p)
     local Servers = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
     if Servers then
         for Code, Info in pairs(Servers) do
-            if #Info.Players < Info.MaxPlayers then
+            if #Info.Players < Info.MaxPlayers and p.leaderstats.Level.Value >= Info.RequiredLevel then
                 TeleportToServer(PLACE_IDS[Info.Map], Info.ServerCode, {p})
                 return
             end
@@ -61,9 +61,9 @@ Remotes.JoinRandom.OnServerInvoke = function(p)
 end
 
 Remotes.JoinServer.OnServerInvoke = function(p, Code)
-    if Code and Code ~= "" then
+    if Code and Code ~= "" then         
         local Info = DataStore.GetData(DATA_STORE_SCOPE, DATA_STORE_KEY)
-        if Info and Info[Code] then
+        if Info and Info[Code] and p.leaderstats.Level.Value >= Info[Code].RequiredLevel then
             TeleportToServer(PLACE_IDS[Info[Code].Map], Info[Code].ServerCode, {p})
             return
         end
@@ -99,7 +99,7 @@ Remotes.GenerateCode.OnServerInvoke = function(p, Info)
         Dificulty = Info.Dificulty;
 
         Owner = p.Name;
-        LevelOfOwner = p.leaderstats.Level.Value;
+        RequiredLevel = Info.RequiredLevel;
         
 		ServerCode = ServerCode;
 		ServerID = ServerID;
