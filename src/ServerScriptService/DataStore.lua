@@ -57,11 +57,7 @@ function DataStore.UpdateData(Store, Key, Data, Index)
                 Table = {}
             end
     
-            if Index then
-                Table[Index] = Data
-            else
-                table.insert(Table, Data)
-            end
+            Table[Index] = Data
             return Table
         end)
 	end)

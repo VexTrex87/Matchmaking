@@ -12,6 +12,7 @@ local SERVER_LIST_UPDATE_DELAY = 5
 local TeleportService = game:GetService("TeleportService")
 local Core = require(game.ReplicatedStorage.Modules.Core)
 local UiModule = require(game.ReplicatedStorage.Modules.UI)
+
 local p = game.Players.LocalPlayer
 local Remotes = game.ReplicatedStorage.Remotes
 local UIs = game.ReplicatedStorage.UI
@@ -25,15 +26,13 @@ local Join = Frame.Join
 -- // Functions \\ --
 
 function Color(Table, Color, IsBackgroundColor)
-    if IsBackgroundColor then
-        for _,v in pairs(Table) do
+    for _,v in pairs(Table) do
+        if IsBackgroundColor then
             v.BackgroundColor3 = Color
-        end       
-    else
-        for _,v in pairs(Table) do
+        else
             v.TextColor3 = Color
         end
-    end
+    end       
 end
 
 function VisibleAll(Table, IsVisible)
@@ -44,16 +43,9 @@ end
 
 function Update()
     Create.SelectedMap.Value, Create.SelectedDificulty.Value, Create.SelectedPrivacy.Value = "", "", "Public"
-    VisibleAll({Create, Join, Left, Frame.Title})
-    Color({     
-        Left.CreatePrivate.Text;
-        Left.JoinRandom.Text;
-        Create.Dificulty.Easy.Text;
-        Create.Dificulty.Medium.Text;
-        Create.Dificulty.Hard.Text;
-        Create.Dificulty.Endless.Text;
-    }, FADE_1)
-    
+    VisibleAll({Join, Left, Frame.Title}, true)
+    VisibleAll({Create})
+    Color({Left.JoinPublic.Text}, SHOW_1)   
     Color(Core.Get(Create.Maps, "ImageButton"), FADE_2, true)
     
     Color({
@@ -61,16 +53,24 @@ function Update()
         Create.Maps.Grasslands.Title;
         Create.Maps["The Desert"].Title;
     }, FADE_1)
-    
-    Color({Left.CreatePublic.Text;}, SHOW_1)
 
+    Color({     
+        Left.CreatePrivate.Text;
+        Left.CreatePublic.Text;
+        Left.JoinRandom.Text;
+        Create.Dificulty.Easy.Text;
+        Create.Dificulty.Medium.Text;
+        Create.Dificulty.Hard.Text;
+        Create.Dificulty.Endless.Text;
+    }, FADE_1)      
+
+    local Level = Remotes.GetLevel:InvokeServer()
     for _,Map in pairs(Core.Get(Create.Maps, "ImageButton")) do
-        local MeetsLevel = Remotes.CheckLevel:InvokeServer(Map.RequiredLevel.Value)
-        if not MeetsLevel and not Map:FindFirstChild("Locked") then
+        if Level < Map.RequiredLevel.Value and not Map:FindFirstChild("Locked") then
             local Locked = Create.Maps.ListLayout.Locked:Clone()
             Locked.Requirements.Text = "You must be level " .. Map.RequiredLevel.Value .. " to play " .. Map.Name
             Locked.Parent = Map
-        elseif MeetsLevel and Map:FindFirstChild("Locked") then
+        elseif Level >= Map.RequiredLevel.Value and Map:FindFirstChild("Locked") then
             Map.Locked:Destroy()
         end
     end
@@ -79,96 +79,72 @@ end
 function ButtonClicked(Button)
     UI.Click:Play()
 
-    if Button.Parent == UI then
-        if Button.Name == "Create" then
-            if Create.Visible then
-                VisibleAll({Create, Join, Left, Frame.Title})
-            else
-                Join.Visible = false
-                Update()
-                VisibleAll({Create, Left, Frame.Title}, true)
-            end
-        elseif Button.Name == "Join" then
-            if Join.Visible then
-                VisibleAll({Create, Join, Left, Frame.Title})
-            else
-                Create.Visible = false
-                Update()
-                VisibleAll({Join, Left, Frame.Title}, true)
-                Color({Left.CreatePrivate.Text, Left.CreatePublic.Text}, FADE_1)
-            end
+    if Button == UI.Servers then
+        if Frame.Visible then
+            Frame.Visible = false
+        else
+            Frame.Visible = true
+            Update()
         end
     elseif Button.Parent == Left then
-        Join.Visible = false
-        if Button.Name == "CreatePrivate" then
-            VisibleAll({Create, Left, Frame.Title}, true)
-            Color({Left.CreatePublic.Text}, FADE_1)
-            Color({Left.CreatePrivate.Text}, SHOW_1)
-            Create.SelectedPrivacy.Value = "Private"           
-        elseif Button.Name == "CreatePublic" then
-            VisibleAll({Create, Left, Frame.Title}, true)
+        if Button.Name == "CreatePublic" then
+            Create.Visible, Join.Visible = true, false
             Color({Left.CreatePublic.Text}, SHOW_1)
-            Color({Left.CreatePrivate.Text}, FADE_1)
+            Color({Left.JoinPublic.Text, Left.CreatePrivate.Text}, FADE_1)
             Create.SelectedPrivacy.Value = "Public"
+        elseif Button.Name == "CreatePrivate" then
+            Create.Visible, Join.Visible = true, false
+            Color({Left.CreatePrivate.Text}, SHOW_1)
+            Color({Left.JoinPublic.Text, Left.CreatePublic.Text}, FADE_1)
+            Create.SelectedPrivacy.Value = "Private" 
+        elseif Button.Name == "JoinPublic" then
+            Join.Visible, Create.Visible = true, false
+            Color({Left.JoinPublic.Text}, SHOW_1)
+            Color({Left.CreatePrivate.Text, Left.CreatePublic.Text}, FADE_1)     
         elseif Button.Name == "JoinRandom" then
-            UiModule.LoadingScreen.FadeIn(p, "Join Random Game...")
+            UiModule.LoadingScreen.FadeIn(p, "Joining Random Game...")
             TeleportService:SetTeleportGui(UIs.JoiningRandom)
-            local Failed = Remotes.JoinRandom:InvokeServer()
-            if Failed then
+            if Remotes.JoinRandom:InvokeServer() then
                 wait(1)
-                UiModule.LoadingScreen.UpdateProperties(p, {
-                    ["Text"] = "No Servers Found"
-                })
+                UiModule.LoadingScreen.UpdateProperties(p, {["Text"] = "No Servers Found"})
                 wait(1)
                 UiModule.LoadingScreen.FadeOut(p)
             end
-        elseif Button.Name == "JoinServer" then
-            if Left.ServerID.Text ~= "" then
-                UiModule.LoadingScreen.FadeIn(
-                    p,
-                    "Join Game..."
-                )
-                TeleportService:SetTeleportGui(UIs.JoiningGame)
-                local Failed = Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
-                if Failed then
-                    wait(1)
-                    UiModule.LoadingScreen.UpdateProperties(p, {
-                        ["Text"] = "Server Not Found"
-                    })
-                    wait(1)
-                    UiModule.LoadingScreen.FadeOut(p)
-                end
+        elseif Button.Name == "JoinServer" and Left.ServerID.Text ~= "" then
+            UiModule.LoadingScreen.FadeIn(p, "Join Game...")
+            TeleportService:SetTeleportGui(UIs.JoiningGame)
+            if Remotes.JoinServer:InvokeServer(Left.ServerID.Text) then
+                wait(1)
+                UiModule.LoadingScreen.UpdateProperties(p, {["Text"] = "Server Not Found"})
+                wait(1)
+                UiModule.LoadingScreen.FadeOut(p)
             end
         end
-    elseif Button.Parent == Create then
-        if Button.Name == "Apply" then
-            if Create.SelectedPrivacy.Value ~= "" and Create.SelectedDificulty.Value ~= "" and Create.SelectedMap.Value ~= "" then
-                Left.ServerID.Text = Remotes.GenerateCode:InvokeServer({
-                    ["Privacy"] = Create.SelectedPrivacy.Value;
-                    ["Map"] = Create.SelectedMap.Value;
-                    ["Dificulty"] = Create.SelectedDificulty.Value
-                })
-                UI.Success:Play()
-            else
-                UI.Error:Play()
-            end
-        end   
+    elseif Button.Parent == Create and Button.Name == "Apply" then
+        if Create.SelectedPrivacy.Value ~= "" and Create.SelectedDificulty.Value ~= "" and Create.SelectedMap.Value ~= "" then
+            Left.ServerID.Text = Remotes.GenerateCode:InvokeServer({
+                ["Privacy"] = Create.SelectedPrivacy.Value;
+                ["Map"] = Create.SelectedMap.Value;
+                ["Dificulty"] = Create.SelectedDificulty.Value
+            })
+            UI.Success:Play()
+        else
+            UI.Error:Play()
+        end
     elseif Button.Parent == Create.Dificulty then
         Color({Create.Dificulty.Easy.Text, Create.Dificulty.Medium.Text, Create.Dificulty.Hard.Text, Create.Dificulty.Endless.Text}, FADE_1)
         Color({Button.Text}, SHOW_1)
         Create.SelectedDificulty.Value = Button.Name     
-    elseif Button.Parent == Create.Maps then
-        if Remotes.CheckLevel:InvokeServer(Button.RequiredLevel.Value) then
-            Color(Core.Get(Create.Maps, "ImageButton"), FADE_2, true)
-            Color({
-                Create.Maps.Baseplate.Title;
-                Create.Maps.Grasslands.Title;
-                Create.Maps["The Desert"].Title;
-            }, FADE_1)
-            Color({Button}, SHOW_1, true)
-            Color({Button.Title}, SHOW_1)
-            Create.SelectedMap.Value = Button.Name
-        end
+    elseif Button.Parent == Create.Maps and Remotes.GetLevel:InvokeServer() >= Button.RequiredLevel.Value then
+        Create.SelectedMap.Value = Button.Name
+        Color(Core.Get(Create.Maps, "ImageButton"), FADE_2, true) -- Fade background
+        Color({ -- Fade text
+            Create.Maps.Baseplate.Title;
+            Create.Maps.Grasslands.Title;
+            Create.Maps["The Desert"].Title;
+        }, FADE_1)
+        Color({Button}, SHOW_1, true) -- Show background
+        Color({Button.Title}, SHOW_1) -- Show text
     end
 
 end
@@ -176,6 +152,7 @@ end
 -- // Main \\ --
 
 Update()
+Frame.Visible = false
 
 for _,Button in pairs(UI:GetDescendants()) do
     if Button:IsA("TextButton") or Button:IsA("ImageButton") then
@@ -192,14 +169,14 @@ while wait(1) do
             
             -- Deletes servers that are not found
             for _,Frame in pairs(Core.Get(Join.Games, "ImageLabel")) do
-                if not table.find(Servers, Frame.Name) or #Info.Players >= MaxPlayers then
+                if not table.find(Servers, Frame.Name) or #Servers[Frame.Name].Players >= Servers[Frame.Name].MaxPlayers then
                     Frame:Destroy()
                 end
             end
 
             -- Adds servers
             for Code, Info in pairs(Servers) do
-                if not Join.Games:FindFirstChild(Code) then
+                if not Join.Games:FindFirstChild(Code) and Info.Privacy == "Public" then
                     local Template = Join.Games.ListLayout.Template:Clone()
                     Template.Creator.Text = Info.Owner
                     Template.Dificulty.Text = Info.Dificulty
@@ -212,12 +189,9 @@ while wait(1) do
                             "Join Game..."
                         )
                         TeleportService:SetTeleportGui(UIs.JoiningGame)
-                        local Failed = Remotes.JoinServer:InvokeServer(Left.ServerID.Text)
-                        if Failed then
+                        if Remotes.JoinServer:InvokeServer(Code) then
                             wait(1)
-                            UiModule.LoadingScreen.UpdateProperties(p, {
-                                ["Text"] = "Server Not Found"
-                            })
+                            UiModule.LoadingScreen.UpdateProperties(p, {["Text"] = "Server Not Found"})
                             wait(1)
                             UiModule.LoadingScreen.FadeOut(p)
                         end
